@@ -1,0 +1,64 @@
+/* App styles are now handled by Tailwind classes */
+
+.App {
+  min-height: 100vh;
+}
+
+/* Keep some utility classes for backward compatibility */
+.btn {
+  @apply px-6 py-3 rounded-lg font-semibold transition-all;
+}
+
+.btn-primary {
+  @apply bg-gradient-to-r from-accent-purple to-accent-pink text-white hover:opacity-90;
+}
+
+.btn-secondary {
+  @apply bg-gray-50 text-dark-text border border-gray-200 hover:bg-gray-100;
+}
+
+.btn-outline {
+  @apply bg-transparent border-2 border-accent-purple text-accent-purple hover:bg-accent-purple hover:text-white;
+}
+
+.card {
+  @apply bg-white backdrop-blur-md border border-gray-200 rounded-xl p-6 transition-all shadow-sm;
+}
+
+.card:hover {
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+}
+
+.input-group {
+  @apply mb-5;
+}
+
+.input-group label {
+  @apply block mb-2 font-semibold text-dark-text;
+}
+
+.input-group input,
+.input-group textarea,
+.input-group select {
+  @apply w-full px-4 py-3 rounded-lg bg-white border border-gray-200 text-dark-text focus:border-accent-purple focus:outline-none;
+}
+
+.input-group textarea {
+  @apply resize-y min-h-[100px];
+}
+
+.loading {
+  @apply text-center py-10 text-dark-muted;
+}
+
+.error {
+  @apply bg-red-500/20 border border-red-500 text-red-400 px-4 py-3 rounded-lg mb-5;
+}
+
+.success {
+  @apply bg-green-500/20 border border-green-500 text-green-400 px-4 py-3 rounded-lg mb-5;
+}
+
+.container {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
