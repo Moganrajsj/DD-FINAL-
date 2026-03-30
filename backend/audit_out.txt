@@ -1,0 +1,9 @@
+Total: 8
+ID=1 Industrial Supplies = 100
+ID=2 Electronics & Electrical = 100
+ID=3 Apparel & Fashion = 100
+ID=4 Machinery = 102
+ID=5 Construction & Real Estate = 100
+ID=6 Chemicals = 100
+ID=7 Food & Beverage = 100
+ID=8 Health & Beauty = 100
