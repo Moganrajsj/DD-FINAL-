@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice/Bill Format Template</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #8B5CF6;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-left: 4px solid #8B5CF6;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #8B5CF6;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="number"],
+        input[type="date"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #8B5CF6;
+        }
+        
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .checkbox-group {
+            margin: 10px 0;
+        }
+        
+        .checkbox-group label {
+            font-weight: normal;
+            display: inline-block;
+            margin-left: 5px;
+        }
+        
+        input[type="checkbox"] {
+            width: auto;
+            margin-right: 5px;
+        }
+        
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-size: 13px;
+        }
+        
+        .note strong {
+            color: #856404;
+        }
+        
+        .button-group {
+            text-align: center;
+            margin-top: 30px;
+        }
+        
+        button {
+            background: #8B5CF6;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #7C3AED;
+        }
+        
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+                padding: 20px;
+            }
+            button {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📄 Invoice/Bill Format Template</h1>
+        <p class="subtitle">Fill in all the details below. You can print this page as PDF after filling.</p>
+        
+        <div class="note">
+            <strong>📌 Instructions:</strong> Fill in all the fields below with your invoice requirements. 
+            After filling, use your browser's "Print" function (Ctrl+P) and select "Save as PDF" to create a PDF file.
+        </div>
+
+        <!-- HEADER SECTION -->
+        <div class="section">
+            <div class="section-title">1. HEADER SECTION</div>
+            
+            <div class="form-group">
+                <label>Company Logo:</label>
+                <select>
+                    <option>No logo</option>
+                    <option>Custom logo (provide URL)</option>
+                </select>
+            </div>
+            
+            <div class="row">
+                <div class="form-group">
+                    <label>Logo Position:</label>
+                    <select>
+                        <option>Left</option>
+                        <option>Center</option>
+                        <option>Right</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Logo Size:</label>
+                    <select>
+                        <option>Small</option>
+                        <option>Medium</option>
+                        <option>Large</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Invoice Title Text:</label>
+                <input type="text" placeholder="e.g., TAX INVOICE, INVOICE, BILL, COMMERCIAL INVOICE">
+            </div>
+            
+            <div class="row">
+                <div class="form-group">
+                    <label>Invoice Number Format:</label>
+                    <input type="text" placeholder="e.g., INV-2024-001, INV/2024/001">
+                </div>
+                <div class="form-group">
+                    <label>Date Format:</label>
+                    <input type="text" placeholder="e.g., DD/MM/YYYY, 29 December 2024">
+                </div>
+            </div>
+        </div>
+
+        <!-- SELLER INFORMATION -->
+        <div class="section">
+            <div class="section-title">2. SELLER/COMPANY INFORMATION (FROM)</div>
+            
+            <div class="form-group">
+                <label>Company Name:</label>
+                <input type="text" placeholder="Enter company name">
+            </div>
+            
+            <div class="form-group">
+                <label>Company Address:</label>
+                <textarea placeholder="Full address including street, city, state, pincode, country"></textarea>
+            </div>
+            
+            <div class="row">
+                <div class="form-group">
+                    <label>Phone Number:</label>
+                    <input type="tel" placeholder="+91-XXXXXXXXXX">
+                </div>
+                <div class="form-group">
+                    <label>Email:</label>
+                    <input type="email" placeholder="contact@example.com">
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="form-group">
+                    <label>Website:</label>
+                    <input type="text" placeholder="www.example.com">
+                </div>
+                <div class="form-group">
+                    <label>GST Number:</label>
+                    <input type="text" placeholder="27ABCDE1234F1Z5">
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="form-group">
+                    <label>PAN Number:</label>
+                    <input type="text" placeholder="ABCDE1234F">
+                </div>
+                <div class="form-group">
+                    <label>CIN Number (if applicable):</label>
+                    <input type="text" placeholder="U12345MH2024PTC123456">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Bank Details (if needed):</label>
+                <div class="row">
+                    <input type="text" placeholder="Bank Name">
+                    <input type="text" placeholder="Account Number">
+                </div>
+                <div class="row" style="margin-top: 10px;">
+                    <input type="text" placeholder="IFSC Code">
+                    <input type="text" placeholder="Branch">
+                </div>
+            </div>
+        </div>
+
+        <!-- BUYER INFORMATION -->
+        <div class="section">
+            <div class="section-title">3. BUYER INFORMATION (TO)</div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="buyer-company">
+                <label for="buyer-company">Show buyer company name</label>
+            </div>
+            
+            <div class="form-group">
+                <label>Buyer Name Field Label:</label>
+                <input type="text" placeholder="e.g., Customer Name, Buyer Name">
+            </div>
+            
+            <div class="form-group">
+                <label>Buyer Address Field Label:</label>
+                <input type="text" placeholder="e.g., Billing Address, Customer Address">
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="buyer-gst">
+                <label for="buyer-gst">Show buyer GST number</label>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="shipping-address">
+                <label for="shipping-address">Show separate shipping address section</label>
+            </div>
+        </div>
+
+        <!-- INVOICE DETAILS -->
+        <div class="section">
+            <div class="section-title">4. INVOICE DETAILS</div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="order-id" checked>
+                <label for="order-id">Show Order ID</label>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="order-date" checked>
+                <label for="order-date">Show Order Date</label>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="due-date">
+                <label for="due-date">Show Due Date</label>
+            </div>
+            
+            <div class="form-group">
+                <label>Payment Terms:</label>
+                <input type="text" placeholder="e.g., Net 30, COD, Due on Receipt">
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="po-number">
+                <label for="po-number">Show PO Number field</label>
+            </div>
+        </div>
+
+        <!-- PRODUCT TABLE -->
+        <div class="section">
+            <div class="section-title">5. PRODUCT/ITEM TABLE</div>
+            
+            <div class="form-group">
+                <label>Table Columns (check all needed):</label>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="col-sno" checked>
+                    <label for="col-sno">S.No. / Serial Number</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="col-desc" checked>
+                    <label for="col-desc">Description / Product Name</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="col-hsn">
+                    <label for="col-hsn">HSN/SAC Code</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="col-qty" checked>
+                    <label for="col-qty">Quantity</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="col-unit">
+                    <label for="col-unit">Unit (Pcs/Kg/Ltr)</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="col-price" checked>
+                    <label for="col-price">Unit Price</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="col-discount">
+                    <label for="col-discount">Discount</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="col-taxable">
+                    <label for="col-taxable">Taxable Amount</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="col-cgst">
+                    <label for="col-cgst">CGST (%)</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="col-sgst">
+                    <label for="col-sgst">SGST (%)</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="col-igst">
+                    <label for="col-igst">IGST (%)</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="col-total" checked>
+                    <label for="col-total">Total / Amount</label>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Table Header Background Color:</label>
+                <input type="text" placeholder="#8B5CF6" value="#8B5CF6">
+            </div>
+        </div>
+
+        <!-- PRICING BREAKDOWN -->
+        <div class="section">
+            <div class="section-title">6. PRICING BREAKDOWN</div>
+            
+            <div class="form-group">
+                <label>Show these sections:</label>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="show-subtotal" checked>
+                    <label for="show-subtotal">Subtotal</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="show-discount">
+                    <label for="show-discount">Discount</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="show-shipping">
+                    <label for="show-shipping">Shipping Charges</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="show-cgst">
+                    <label for="show-cgst">CGST Amount</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="show-sgst">
+                    <label for="show-sgst">SGST Amount</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="show-igst">
+                    <label for="show-igst">IGST Amount</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="show-total-gst" checked>
+                    <label for="show-total-gst">Total GST</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="show-grand-total" checked>
+                    <label for="show-grand-total">Grand Total</label>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="form-group">
+                    <label>GST/Tax Rate (%):</label>
+                    <input type="number" placeholder="18" value="18">
+                </div>
+                <div class="form-group">
+                    <label>Show Amount in Words:</label>
+                    <select>
+                        <option>Yes</option>
+                        <option>No</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAYMENT INFORMATION -->
+        <div class="section">
+            <div class="section-title">7. PAYMENT INFORMATION</div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="show-payment-method" checked>
+                <label for="show-payment-method">Show Payment Method</label>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="show-payment-status" checked>
+                <label for="show-payment-status">Show Payment Status</label>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="show-transaction-id">
+                <label for="show-transaction-id">Show Transaction ID</label>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="show-bank-details">
+                <label for="show-bank-details">Show Bank Account Details</label>
+            </div>
+            
+            <div class="form-group">
+                <label>Payment Instructions (if any):</label>
+                <textarea placeholder="e.g., Payment should be made within 30 days"></textarea>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="section">
+            <div class="section-title">8. FOOTER SECTION</div>
+            
+            <div class="form-group">
+                <label>Thank You Message:</label>
+                <input type="text" placeholder="e.g., Thank you for your business!">
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="show-terms">
+                <label for="show-terms">Show Terms & Conditions</label>
+            </div>
+            
+            <div class="form-group">
+                <label>Terms & Conditions Text:</label>
+                <textarea placeholder="Enter your terms and conditions here"></textarea>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="show-signature">
+                <label for="show-signature">Show Authorized Signature</label>
+            </div>
+            
+            <div class="form-group">
+                <label>Signature Label:</label>
+                <input type="text" placeholder="e.g., Authorized Signatory, For [Company Name]">
+            </div>
+        </div>
+
+        <!-- DESIGN & STYLING -->
+        <div class="section">
+            <div class="section-title">9. DESIGN & STYLING</div>
+            
+            <div class="row">
+                <div class="form-group">
+                    <label>Primary Color (Hex):</label>
+                    <input type="text" placeholder="#8B5CF6" value="#8B5CF6">
+                </div>
+                <div class="form-group">
+                    <label>Secondary Color (Hex):</label>
+                    <input type="text" placeholder="#FF6B35" value="#FF6B35">
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="form-group">
+                    <label>Font Family:</label>
+                    <select>
+                        <option>Arial</option>
+                        <option>Times New Roman</option>
+                        <option>Helvetica</option>
+                        <option>Roboto</option>
+                        <option>Calibri</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Page Size:</label>
+                    <select>
+                        <option>A4</option>
+                        <option>Letter</option>
+                        <option>Legal</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Page Orientation:</label>
+                <select>
+                    <option>Portrait</option>
+                    <option>Landscape</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- ADDITIONAL REQUIREMENTS -->
+        <div class="section">
+            <div class="section-title">10. ADDITIONAL REQUIREMENTS</div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="qr-code">
+                <label for="qr-code">Include QR Code</label>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="barcode">
+                <label for="barcode">Include Barcode</label>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="watermark">
+                <label for="watermark">Include Watermark</label>
+            </div>
+            
+            <div class="form-group">
+                <label>Any Other Special Requirements:</label>
+                <textarea placeholder="Describe any other features or requirements you need"></textarea>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button onclick="window.print()">🖨️ Print / Save as PDF</button>
+        </div>
+        
+        <div class="note" style="margin-top: 30px;">
+            <strong>✅ Next Steps:</strong><br>
+            1. Fill in all the fields above<br>
+            2. Click "Print / Save as PDF" button<br>
+            3. In the print dialog, select "Save as PDF"<br>
+            4. Upload the PDF file to me, and I'll implement the exact format!
+        </div>
+    </div>
+</body>
+</html>
+
+
+

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { FiCreditCard, FiLock, FiCheck, FiArrowLeft, FiShoppingBag, FiDownload, FiTruck } from 'react-icons/fi';
+import { generatePDF } from '../utils/pdfGenerator';
 
 function Payment() {
   const navigate = useNavigate();
@@ -75,67 +76,34 @@ function Payment() {
     return true;
   };
 
-  const downloadDocument = (type) => {
+  const downloadDocument = async (type) => {
     if (!orderData) return;
 
-    const isQuotation = type === 'quotation';
-    const title = isQuotation ? 'Instant Quotation' : 'Order Invoice';
+    try {
+      // Fetch full order details including company address
+      const response = await axios.get(`/api/orders/${orderData.id}`);
+      const fullOrderData = response.data;
 
-    const lines = [
-      `DealsDouble.ai - ${title}`,
-      '====================================',
-      '',
-      `Order ID: ${orderData.id}`,
-      `Order Date: ${orderData.created_at || new Date().toISOString().split('T')[0]}`,
-      '',
-      `Buyer Name: ${orderData.buyer_name || ''}`,
-      `Buyer Email: ${orderData.buyer_email || ''}`,
-    ];
+      // Prepare data for PDF
+      const pdfData = {
+        ...orderData,
+        ...fullOrderData,
+        payment_method: fullOrderData.payment_method || savedPaymentMethod || paymentMethod,
+        payment_status: fullOrderData.payment_status || (savedPaymentMethod === 'cod' ? 'pending' : 'paid'),
+        shipping: orderData.shipping
+      };
 
-    if (orderData.shipping) {
-      lines.push(
-        '',
-        'Shipping Address:',
-        `${orderData.shipping.name || ''}`,
-        `${orderData.shipping.address || ''}`,
-        `${orderData.shipping.city || ''} ${orderData.shipping.state || ''} ${orderData.shipping.pincode || ''}`
-      );
+      // Generate company address string
+      const companyAddress = fullOrderData.company_location || 'Address not provided';
+
+      // Generate PDF
+      generatePDF(pdfData, type, companyAddress);
+    } catch (error) {
+      console.error('Error fetching order details:', error);
+      // Fallback: generate PDF with available data
+      const companyAddress = orderData.company_location || 'Address not provided';
+      generatePDF(orderData, type, companyAddress);
     }
-
-    lines.push(
-      '',
-      'Product Details:',
-      `Product: ${orderData.product_name || ''}`,
-      `Supplier: ${orderData.company_name || ''}`,
-      `Quantity: ${orderData.quantity}`,
-      `Unit Price: ₹${(orderData.unit_price || 0).toLocaleString('en-IN')}`,
-      `Total Amount: ₹${(orderData.total_amount || 0).toLocaleString('en-IN')}`,
-      '',
-      `Status: ${orderData.status || (isQuotation ? 'Pending Payment' : 'Completed')}`,
-    );
-
-    if (!isQuotation) {
-      const method = savedPaymentMethod || paymentMethod || 'card';
-      const methodName = method === 'card' ? 'Credit/Debit Card' : method === 'upi' ? 'UPI' : 'Cash on Delivery';
-      const paymentStatus = method === 'cod' ? 'Pending (COD)' : 'Completed';
-      lines.push(
-        '',
-        'Payment Details:',
-        `Payment Method: ${methodName}`,
-        `Payment Status: ${paymentStatus}`,
-        `Payment Date: ${new Date().toISOString().split('T')[0]}`,
-      );
-    }
-
-    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${isQuotation ? 'quotation' : 'invoice'}-${orderData.id || 'order'}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
   };
 
   useEffect(() => {
@@ -172,11 +140,10 @@ function Payment() {
       // Handle Cash on Delivery
       if (paymentMethod === 'cod') {
         try {
-          // Update order status for COD
-          const updateResponse = await axios.put(`/api/orders/${orderData.id}`, {
-            payment_method: 'cod',
-            payment_status: 'pending',
-            status: 'pending'
+          const user = JSON.parse(userStr);
+          // Complete COD order via dedicated endpoint
+          const codResponse = await axios.post(`/api/orders/${orderData.id}/cod`, {
+            user_id: user.id
           }, {
             headers: { Authorization: `Bearer ${token}` }
           });
@@ -184,12 +151,22 @@ function Payment() {
           setSavedPaymentMethod('cod');
           setOrderData(prev => ({ 
             ...prev, 
-            status: 'pending',
-            payment_status: 'pending',
+            status: codResponse.data.status || 'processing',
+            payment_status: codResponse.data.payment_status || 'pending',
             payment_method: 'cod'
           }));
-          setPaymentSuccess(true);
-          setProcessing(false);
+          
+          // Navigate to Order Placed page
+          navigate('/order-placed', { 
+            state: { 
+              orderData: {
+                ...orderData,
+                status: codResponse.data.status || 'processing',
+                payment_status: codResponse.data.payment_status || 'pending',
+                payment_method: 'cod'
+              }
+            } 
+          });
           return;
         } catch (error) {
           console.error('COD order update error:', error);

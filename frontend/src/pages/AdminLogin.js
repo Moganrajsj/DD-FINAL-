@@ -16,13 +16,33 @@ function AdminLogin() {
     setLoading(true);
     try {
       const res = await axios.post('/api/auth/login', { email, password });
+      
+      // Check if user is an admin
+      if (!res.data.user.is_admin) {
+        setError('Access denied. Admin privileges required.');
+        setLoading(false);
+        return;
+      }
+      
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
       localStorage.setItem('admin_access', 'true'); // Mark as admin access
       // Redirect to admin portal
       navigate('/admin');
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed');
+      console.error('Login error:', err);
+      console.error('Error response:', err.response);
+      
+      if (err.response) {
+        // Server responded with error status
+        setError(err.response?.data?.error || `Login failed: ${err.response.status} ${err.response.statusText}`);
+      } else if (err.request) {
+        // Request made but no response received
+        setError('Cannot connect to server. Please ensure the backend is running.');
+      } else {
+        // Something else happened
+        setError(err.message || 'Login failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

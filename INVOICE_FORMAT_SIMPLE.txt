@@ -1,0 +1,199 @@
+═══════════════════════════════════════════════════════════════
+                    INVOICE/BILL FORMAT TEMPLATE
+═══════════════════════════════════════════════════════════════
+
+Please fill in the information below. You can also attach a sample 
+invoice image or PDF if you have one.
+
+═══════════════════════════════════════════════════════════════
+1. HEADER
+═══════════════════════════════════════════════════════════════
+
+Company Logo: [Yes/No] _______________
+Logo Position: [Left/Center/Right] _______________
+
+Invoice Title: _______________
+  (e.g., "TAX INVOICE", "INVOICE", "BILL")
+
+Invoice Number Format: _______________
+  (e.g., "INV-2024-001", "INV/2024/001")
+
+Date Format: _______________
+  (e.g., "DD/MM/YYYY", "29 December 2024")
+
+═══════════════════════════════════════════════════════════════
+2. SELLER INFORMATION (FROM)
+═══════════════════════════════════════════════════════════════
+
+Company Name: _______________
+Address: _______________
+       _______________
+       _______________
+
+Phone: _______________
+Email: _______________
+Website: _______________
+GST Number: _______________
+PAN Number: _______________
+
+Bank Details (if needed):
+  Bank Name: _______________
+  Account Number: _______________
+  IFSC Code: _______________
+  Branch: _______________
+
+═══════════════════════════════════════════════════════════════
+3. BUYER INFORMATION (TO)
+═══════════════════════════════════════════════════════════════
+
+Buyer Name: _______________
+Company Name: _______________
+Address: _______________
+       _______________
+       _______________
+
+Phone: _______________
+Email: _______________
+GST Number: _______________
+
+Shipping Address (if different):
+  Name: _______________
+  Address: _______________
+       _______________
+
+═══════════════════════════════════════════════════════════════
+4. INVOICE DETAILS
+═══════════════════════════════════════════════════════════════
+
+Order ID: _______________
+Invoice Date: _______________
+Due Date: _______________
+Payment Terms: _______________
+  (e.g., "Net 30", "COD", "Due on Receipt")
+
+═══════════════════════════════════════════════════════════════
+5. PRODUCT TABLE
+═══════════════════════════════════════════════════════════════
+
+Table Columns (check what you need):
+  [ ] S.No. / Serial Number
+  [ ] Product Name / Description
+  [ ] HSN/SAC Code
+  [ ] Quantity
+  [ ] Unit (Pcs/Kg/Ltr)
+  [ ] Unit Price
+  [ ] Discount
+  [ ] Taxable Amount
+  [ ] CGST (%)
+  [ ] SGST (%)
+  [ ] IGST (%)
+  [ ] Total
+
+═══════════════════════════════════════════════════════════════
+6. PRICING BREAKDOWN
+═══════════════════════════════════════════════════════════════
+
+Show these sections:
+  [ ] Subtotal
+  [ ] Discount
+  [ ] Shipping Charges
+  [ ] CGST Amount
+  [ ] SGST Amount
+  [ ] IGST Amount
+  [ ] Total GST
+  [ ] Grand Total
+
+Tax Rate: _______________% (e.g., 18%, 5%, 12%)
+
+Show amount in words? [Yes/No] _______________
+  (e.g., "Rupees One Lakh Twenty Three Thousand Four Hundred 
+   Fifty Six Only")
+
+═══════════════════════════════════════════════════════════════
+7. PAYMENT INFORMATION
+═══════════════════════════════════════════════════════════════
+
+Show Payment Method? [Yes/No] _______________
+Show Payment Status? [Yes/No] _______________
+Show Transaction ID? [Yes/No] _______________
+
+Bank Account Details (if needed):
+  [ ] Show bank details
+  Bank Name: _______________
+  Account Number: _______________
+  IFSC Code: _______________
+
+═══════════════════════════════════════════════════════════════
+8. FOOTER
+═══════════════════════════════════════════════════════════════
+
+Thank You Message: _______________
+
+Terms & Conditions: _______________
+  (Paste your terms here or attach file)
+
+Authorized Signature: [Yes/No] _______________
+Signature Label: _______________
+  (e.g., "Authorized Signatory", "For [Company Name]")
+
+═══════════════════════════════════════════════════════════════
+9. DESIGN & STYLING
+═══════════════════════════════════════════════════════════════
+
+Primary Color: _______________ (Hex code, e.g., #8B5CF6)
+Secondary Color: _______________
+Text Color: _______________
+Background Color: _______________
+
+Font: _______________ (e.g., Arial, Times New Roman)
+
+Page Size: [A4/Letter/Custom] _______________
+Orientation: [Portrait/Landscape] _______________
+
+═══════════════════════════════════════════════════════════════
+10. SAMPLE INVOICE DATA
+═══════════════════════════════════════════════════════════════
+
+Please provide example data:
+
+Invoice #: INV-2024-001
+Date: 29/12/2024
+
+From:
+  DealsDouble.ai
+  123 Business Street
+  Mumbai, Maharashtra 400001
+  GST: 27ABCDE1234F1Z5
+
+To:
+  ABC Industries
+  456 Industrial Area
+  Delhi, Delhi 110001
+  GST: 29FGHIJ5678K2L6
+
+Items:
+  1. Industrial Valves - Qty: 10, Price: ₹3,500 each
+  2. Steel Pipes - Qty: 50, Price: ₹850 each
+  3. Welding Electrodes - Qty: 20, Price: ₹1,200 each
+
+Subtotal: ₹________
+GST (18%): ₹________
+Total: ₹________
+
+═══════════════════════════════════════════════════════════════
+11. ADDITIONAL REQUIREMENTS
+═══════════════════════════════════════════════════════════════
+
+Any other features or requirements:
+  _____________________________________________________________
+  _____________________________________________________________
+  _____________________________________________________________
+
+═══════════════════════════════════════════════════════════════
+
+Once you fill this out, I'll implement the exact invoice format 
+you need!
+
+
+
+

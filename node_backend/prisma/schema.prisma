@@ -1,0 +1,409 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   String    @id @default(uuid()) @map("id")
+  name                 String    @db.VarChar(120)
+  email                String    @unique @db.VarChar(120)
+  passwordHash         String    @map("password_hash") @db.VarChar(255)
+  role                 String?   @default("buyer") @db.VarChar(20)
+  companyId            Int?      @map("company_id")
+  avatarUrl            String?   @default("") @map("avatar_url") @db.VarChar(255)
+  phone                String?   @default("") @db.VarChar(20)
+  bio                  String?   @default("") @db.Text
+  isAdmin              Boolean   @default(false) @map("is_admin")
+  isBuyerManager       Boolean   @default(false) @map("is_buyer_manager")
+  membershipTier       String    @default("STARTER") @map("membership_tier") @db.VarChar(20)
+  welcomeEmailSent     Boolean   @default(false) @map("welcome_email_sent")
+  resetTokenHash       String    @default("") @map("reset_token_hash") @db.VarChar(64)
+  resetTokenExpiresAt  DateTime? @map("reset_token_expires_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  company              Company?  @relation(fields: [companyId], references: [id])
+  orders               Order[]
+  reviews              Review[]
+  wishlistItems        Wishlist[]
+  buyRequirements      BuyRequirement[]
+  leadPurchases        LeadPurchase[]
+  inquirySentMessages  InquiryMessage[]
+  assignedInquiries    Inquiry[] @relation("ManagerInquiries")
+  subscriptions        Subscription[]
+  marketplaceEvents    MarketplaceEvent[]
+  sentMessages         ChatMessage[] @relation("SentMessages")
+  receivedMessages     ChatMessage[] @relation("ReceivedMessages")
+
+  @@map("users")
+}
+
+model Company {
+  id             Int       @id @default(autoincrement())
+  name           String    @db.VarChar(150)
+  description    String?   @default("") @db.Text
+  location       String?   @default("India") @db.VarChar(120)
+  website        String?   @default("") @db.VarChar(255)
+  industry       String?   @default("") @db.VarChar(100)
+  gstNumber      String?   @default("") @map("gst_number") @db.VarChar(20)
+  logoUrl        String?   @default("") @map("logo_url") @db.VarChar(255)
+  verified       Boolean?  @default(false)
+  bestSeller     Boolean?  @default(false) @map("best_seller")
+  membershipTier String?   @default("FREE") @map("membership_tier") @db.VarChar(20)
+  priorityScore  Int?      @default(0) @map("priority_score")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  products       Product[]
+  users          User[]
+  orders         Order[]
+  tradeLeads     TradeLead[]
+  rfqMatches     RFQMatch[]
+  sellerAlerts   SellerAlert[]
+  marketplaceEvents MarketplaceEvent[]
+
+  @@map("company")
+}
+
+model Category {
+  id            Int       @id @default(autoincrement())
+  name          String    @unique @db.VarChar(120)
+  description   String?   @db.Text
+  iconUrl       String?   @map("icon_url") @db.VarChar(255)
+  views         Int?      @default(0)
+  salesCount    Int?      @default(0) @map("sales_count")
+  lastVisitedAt DateTime? @default(now()) @map("last_visited_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  products      Product[]
+  marketplaceEvents MarketplaceEvent[]
+
+  @@map("category")
+}
+
+model Product {
+  id               Int       @id @default(autoincrement())
+  name             String    @db.VarChar(150)
+  description      String?   @default("") @db.Text
+  price            Float?
+  imageUrl         String?   @default("") @map("image_url") @db.VarChar(255)
+  featured         Boolean?  @default(false)
+  approved         Boolean?  @default(false)
+  location         String?   @default("India") @db.VarChar(120)
+  stockQuantity    Int?      @default(0) @map("stock_quantity")
+  minOrderQuantity Int?      @default(1) @map("min_order_quantity")
+  tags             String?   @default("") @db.Text
+  aiDescription    String?   @default("") @map("ai_description") @db.Text
+  isPriority       Boolean?  @default(false) @map("is_priority")
+  aiSummary        String?   @default("") @map("ai_summary") @db.Text
+  priceTrend       Float?    @default(0.0) @map("price_trend")
+  bulkPricingJson  String?   @default("[]") @map("bulk_pricing_json") @db.Text
+  views            Int?      @default(0)
+  salesCount       Int?      @default(0) @map("sales_count")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  categoryId       Int?      @map("category_id")
+  companyId        Int?      @map("company_id")
+
+  category         Category? @relation(fields: [categoryId], references: [id])
+  company          Company?  @relation(fields: [companyId], references: [id])
+  orders           Order[]
+  reviews          Review[]
+  images           ProductImage[]
+  inquiries        Inquiry[]
+  wishlists        Wishlist[]
+  chatMessages     ChatMessage[]
+  marketplaceEvents MarketplaceEvent[]
+
+  @@map("product")
+}
+
+model Inquiry {
+  id                Int       @id @default(autoincrement())
+  productId         Int       @map("product_id")
+  name              String    @db.VarChar(120)
+  email             String    @db.VarChar(120)
+  phone             String    @db.VarChar(20)
+  message           String    @db.Text
+  quantity          String?   @db.VarChar(50)
+  managerId         String?   @map("manager_id")
+  negotiationStatus String    @default("OPEN") @map("negotiation_status") @db.VarChar(20)
+  createdAt         DateTime  @default(now()) @map("created_at")
+
+  product           Product   @relation(fields: [productId], references: [id])
+  manager           User?     @relation("ManagerInquiries", fields: [managerId], references: [id])
+  replies           InquiryReply[]
+  chatMessages      InquiryMessage[]
+  matches           RFQMatch[]
+  marketplaceEvents MarketplaceEvent[]
+
+  @@map("inquiry")
+}
+
+model InquiryReply {
+  id          Int      @id @default(autoincrement())
+  inquiryId   Int      @map("inquiry_id")
+  userId      String   @map("user_id")
+  message     String   @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  inquiry     Inquiry  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+
+  @@map("inquiry_reply")
+}
+
+model InquiryMessage {
+  id        Int      @id @default(autoincrement())
+  inquiryId Int      @map("inquiry_id")
+  senderId  String   @map("sender_id")
+  message   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  inquiry   Inquiry  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  sender    User     @relation(fields: [senderId], references: [id])
+
+  @@map("inquiry_messages")
+}
+
+model RFQMatch {
+  id        Int      @id @default(autoincrement())
+  inquiryId Int      @map("inquiry_id")
+  companyId Int      @map("company_id")
+  score     Float    @default(0.0)
+  status    String   @default("MATCHED") @db.VarChar(20)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  inquiry   Inquiry  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  company   Company  @relation(fields: [companyId], references: [id])
+
+  @@map("rfq_match")
+}
+
+model Subscription {
+  id        Int      @id @default(autoincrement())
+  userId    String   @map("user_id")
+  planType  String   @map("plan_type") @db.VarChar(50)
+  isActive  Boolean  @default(true) @map("is_active")
+  startDate DateTime @default(now()) @map("start_date")
+  endDate   DateTime? @map("end_date")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("subscription")
+}
+
+model BuyRequirement {
+  id          Int      @id @default(autoincrement())
+  productName String   @map("product_name") @db.VarChar(200)
+  description String   @db.Text
+  quantity    String?  @db.VarChar(50)
+  location    String?  @db.VarChar(120)
+  budget      String?  @db.VarChar(100)
+  email       String?  @db.VarChar(120)
+  userId      String?  @map("user_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user        User?    @relation(fields: [userId], references: [id])
+
+  @@map("buy_requirement")
+}
+
+model TradeLead {
+  id           Int      @id @default(autoincrement())
+  title        String   @db.VarChar(200)
+  description  String   @db.Text
+  type         String   @db.VarChar(20)
+  category     String?  @db.VarChar(100)
+  location     String?  @db.VarChar(120)
+  companyId    Int?     @map("company_id")
+  contactName  String?  @default("") @map("contact_name") @db.VarChar(120)
+  contactEmail String?  @default("") @map("contact_email") @db.VarChar(120)
+  contactPhone String?  @default("") @map("contact_phone") @db.VarChar(20)
+  price        Int      @default(500)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  company      Company? @relation(fields: [companyId], references: [id])
+  purchasers   LeadPurchase[]
+
+  @@map("trade_lead")
+}
+
+model LeadPurchase {
+  id          Int      @id @default(autoincrement())
+  userId      String   @map("user_id")
+  leadId      Int      @map("lead_id")
+  purchasedAt DateTime @default(now()) @map("purchased_at")
+
+  user        User     @relation(fields: [userId], references: [id])
+  lead        TradeLead @relation(fields: [leadId], references: [id])
+
+  @@map("lead_purchase")
+}
+
+model Order {
+  id               Int       @id @default(autoincrement())
+  productId        Int       @map("product_id")
+  companyId        Int       @map("company_id")
+  buyerName        String    @map("buyer_name") @db.VarChar(120)
+  buyerEmail       String    @map("buyer_email") @db.VarChar(120)
+  buyerId          String?   @map("buyer_id")
+  quantity         Int       @default(1)
+  unitPrice        Float     @map("unit_price")
+  totalAmount      Float     @map("total_amount")
+  status           String    @default("pending") @db.VarChar(20)
+  paymentStatus    String    @default("pending") @map("payment_status") @db.VarChar(20)
+  paymentMethod    String?   @default("") @map("payment_method") @db.VarChar(50)
+  paymentId        String?   @default("") @map("payment_id") @db.VarChar(255)
+  trackingNumber   String?   @default("") @map("tracking_number") @db.VarChar(100)
+  shippingAddress  String?   @default("") @map("shipping_address") @db.Text
+  shippingCarrier  String?   @default("") @map("shipping_carrier") @db.VarChar(100)
+  estimatedDelivery DateTime? @map("estimated_delivery")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  product          Product   @relation(fields: [productId], references: [id])
+  company          Company   @relation(fields: [companyId], references: [id])
+  buyer            User?     @relation(fields: [buyerId], references: [id])
+  trackingHistory  OrderTracking[]
+  chatMessages     ChatMessage[]
+  marketplaceEvents MarketplaceEvent[]
+
+  @@map("order")
+}
+
+model ProductImage {
+  id           Int      @id @default(autoincrement())
+  productId    Int      @map("product_id")
+  imageUrl     String   @map("image_url") @db.VarChar(255)
+  isPrimary    Boolean  @default(false) @map("is_primary")
+  displayOrder Int      @default(0) @map("display_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  product      Product  @relation(fields: [productId], references: [id])
+
+  @@map("product_image")
+}
+
+model Review {
+  id                Int      @id @default(autoincrement())
+  productId         Int      @map("product_id")
+  userId            String   @map("user_id")
+  rating            Int
+  title             String?  @default("") @db.VarChar(200)
+  comment           String?  @default("") @db.Text
+  isVerifiedPurchase Boolean  @default(false) @map("is_verified_purchase")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  product           Product  @relation(fields: [productId], references: [id])
+  user              User     @relation(fields: [userId], references: [id])
+
+  @@map("review")
+}
+
+model OrderTracking {
+  id        Int      @id @default(autoincrement())
+  orderId   Int      @map("order_id")
+  status    String   @db.VarChar(50)
+  message   String?  @default("") @db.Text
+  location  String?  @default("") @db.VarChar(200)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  order     Order    @relation(fields: [orderId], references: [id])
+
+  @@map("order_tracking")
+}
+
+model ChatMessage {
+  id         Int      @id @default(autoincrement())
+  senderId   String   @map("sender_id")
+  receiverId String   @map("receiver_id")
+  productId  Int?     @map("product_id")
+  orderId    Int?     @map("order_id")
+  message    String   @db.Text
+  isRead     Boolean  @default(false) @map("is_read")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  product    Product? @relation(fields: [productId], references: [id])
+  order      Order?   @relation(fields: [orderId], references: [id])
+
+  @@map("chat_message")
+}
+
+model Wishlist {
+  id        Int      @id @default(autoincrement())
+  userId    String   @map("user_id")
+  productId Int      @map("product_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId], name: "unique_user_product_wishlist")
+  @@map("wishlist")
+}
+
+model MarketplaceEvent {
+  id          Int      @id @default(autoincrement())
+  eventType   String   @map("event_type") @db.VarChar(50)
+  sessionId   String   @default("") @map("session_id") @db.VarChar(120)
+  userId      String?  @map("user_id")
+  companyId   Int?     @map("company_id")
+  productId   Int?     @map("product_id")
+  categoryId  Int?     @map("category_id")
+  inquiryId   Int?     @map("inquiry_id")
+  orderId     Int?     @map("order_id")
+  location    String   @default("") @db.VarChar(120)
+  searchQuery String   @default("") @map("search_query") @db.VarChar(255)
+  metadataJson String   @default("{}") @map("metadata_json") @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user        User?    @relation(fields: [userId], references: [id])
+  company     Company? @relation(fields: [companyId], references: [id])
+  product     Product? @relation(fields: [productId], references: [id])
+  category    Category? @relation(fields: [categoryId], references: [id])
+  inquiry     Inquiry? @relation(fields: [inquiryId], references: [id])
+  order       Order?   @relation(fields: [orderId], references: [id])
+
+  @@map("marketplace_event")
+}
+
+model SellerAlert {
+  id         Int      @id @default(autoincrement())
+  companyId  Int      @map("company_id")
+  alertType  String   @map("alert_type") @db.VarChar(50)
+  title      String   @db.VarChar(255)
+  message    String?  @default("") @db.Text
+  severity   String   @default("info") @db.VarChar(20)
+  entityType String   @default("") @map("entity_type") @db.VarChar(50)
+  entityId   Int?     @map("entity_id")
+  isRead     Boolean  @default(false) @map("is_read")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  company    Company  @relation(fields: [companyId], references: [id])
+
+  @@map("seller_alert")
+}
+
+model OTP {
+  id        Int      @id @default(autoincrement())
+  phone     String   @db.VarChar(20)
+  otpCode   String   @map("otp_code") @db.VarChar(6)
+  expiresAt DateTime @map("expires_at")
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("otp")
+}

@@ -1,0 +1,45 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = "mysql://u962734523_deals_user:Dealsdouble%40123@srv1743.hstgr.io:3306/u962734523_dealsdouble_db"
+}
+
+model User {
+  id                   Int       @id @default(autoincrement())
+  name                 String    @db.VarChar(120)
+  email                String    @unique @db.VarChar(120)
+  passwordHash         String    @map("password_hash") @db.VarChar(255)
+  companyId            Int?      @map("company_id")
+  avatarUrl            String?   @default("") @map("avatar_url") @db.VarChar(255)
+  phone                String?   @default("") @db.VarChar(20)
+  bio                  String?   @default("") @db.Text
+  isAdmin              Boolean   @default(false) @map("is_admin")
+  isBuyerManager       Boolean   @default(false) @map("is_buyer_manager")
+  membershipTier       String    @default("STARTER") @map("membership_tier") @db.VarChar(20)
+  welcomeEmailSent     Boolean   @default(false) @map("welcome_email_sent")
+  resetTokenHash       String    @default("") @map("reset_token_hash") @db.VarChar(64)
+  resetTokenExpiresAt  DateTime? @map("reset_token_expires_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  company              Company?  @relation(fields: [companyId], references: [id])
+  orders               Order[]
+  reviews              Review[]
+  wishlistItems        Wishlist[]
+  buyRequirements      BuyRequirement[]
+  leadPurchases        LeadPurchase[]
+  inquirySentMessages  InquiryMessage[]
+  assignedInquiries    Inquiry[] @relation("ManagerInquiries")
+  subscriptions        Subscription[]
+  marketplaceEvents    MarketplaceEvent[]
+  sentMessages         ChatMessage[] @relation("SentMessages")
+  receivedMessages     ChatMessage[] @relation("ReceivedMessages")
+
+  @@map("user")
+}

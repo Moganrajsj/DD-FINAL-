@@ -23,6 +23,18 @@ function Dashboard() {
     const parsedUser = JSON.parse(userData);
     setUser(parsedUser);
 
+    // If user is admin, redirect to admin portal instead
+    if (parsedUser.is_admin) {
+      navigate('/admin');
+      return;
+    }
+
+    // Redirect verified companies to the new premium Seller Dashboard
+    if (parsedUser.has_company && parsedUser.company_verified) {
+      navigate('/seller-dashboard');
+      return;
+    }
+
     // Show business modal if user doesn't have a company
     if (!parsedUser.has_company) {
       setShowBusinessModal(true);

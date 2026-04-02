@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { FiHome, FiPackage, FiUsers, FiFileText, FiUser, FiLogOut, FiMenu, FiX, FiSettings, FiChevronDown } from 'react-icons/fi';
+import { FiHome, FiPackage, FiUsers, FiFileText, FiUser, FiLogOut, FiMenu, FiX, FiSettings, FiChevronDown, FiStar } from 'react-icons/fi';
 
 function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -128,6 +128,17 @@ function Navbar() {
             >
               <FiFileText size={18} />
               <span>Trade Leads</span>
+            </Link>
+            <Link
+              to="/subscription-plans"
+              className={`px-3 py-2 rounded-lg transition-colors flex items-center space-x-2 text-sm ${
+                location.pathname === '/subscription-plans'
+                  ? 'bg-accent-purple/20 text-accent-purple'
+                  : 'hover:bg-gray-50 text-dark-text'
+              }`}
+            >
+              <FiStar size={18} />
+              <span>Pricing</span>
             </Link>
             
             {/* Account Menu (for logged in users) */}
@@ -346,6 +357,18 @@ function Navbar() {
             >
               <FiFileText size={18} />
               <span>Trade Leads</span>
+            </Link>
+            <Link
+              to="/subscription-plans"
+              className={`block px-4 py-2 rounded-lg text-sm flex items-center space-x-2 ${
+                location.pathname === '/subscription-plans'
+                  ? 'bg-accent-purple/20 text-accent-purple'
+                  : 'hover:bg-gray-50 text-dark-text'
+              }`}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <FiStar size={18} />
+              <span>Subscription Plans</span>
             </Link>
             {isLoggedIn && (
               <>

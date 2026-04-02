@@ -3,7 +3,7 @@ import { FiMessageCircle } from 'react-icons/fi';
 
 function WhatsAppButton() {
   const handleClick = () => {
-    window.open('https://wa.me/+918925217669?text=', '_blank', 'noopener,noreferrer');
+    window.open('https://wa.me/+919952449499', '_blank', 'noopener,noreferrer');
   };
 
   return (

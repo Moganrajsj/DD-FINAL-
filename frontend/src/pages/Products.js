@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { FiPackage, FiSearch, FiFilter, FiPhone, FiLock, FiMail, FiUser, FiShoppingCart, FiDownload } from 'react-icons/fi';
+import { FiPackage, FiSearch, FiFilter, FiPhone, FiLock, FiMail, FiUser, FiLayers, FiShoppingCart, FiDownload, FiHeart, FiMapPin, FiShield, FiStar, FiDollarSign, FiTrendingUp, FiTrendingDown, FiCheckCircle } from 'react-icons/fi';
+import { generatePDF } from '../utils/pdfGenerator';
 
 function Products() {
   const [searchParams] = useSearchParams();
@@ -42,16 +43,93 @@ function Products() {
     minPrice: '',
     maxPrice: '',
     minRating: '',
-    location: '',
+    location: searchParams.get('location') || '',
+    verifiedSupplier: '',
+    bestSeller: '',
     sortBy: 'created_at',
     sortOrder: 'desc'
   });
+  const [wishlist, setWishlist] = useState([]);
+  const [wishlistLoading, setWishlistLoading] = useState({});
+  const [selectedProducts, setSelectedProducts] = useState(new Set());
+  const [aiSearchMode, setAiSearchMode] = useState(false);
+  
+  // Currency conversion state
+  const [selectedCurrency, setSelectedCurrency] = useState(() => {
+    return localStorage.getItem('preferred_currency') || 'INR';
+  });
+  const [currencyRates, setCurrencyRates] = useState({});
+  const [currencyLoading, setCurrencyLoading] = useState(false);
+  
+  const currencies = [
+    { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
+    { code: 'USD', symbol: '$', name: 'US Dollar' },
+    { code: 'EUR', symbol: '€', name: 'Euro' },
+    { code: 'GBP', symbol: '£', name: 'British Pound' },
+    { code: 'AED', symbol: 'د.إ', name: 'UAE Dirham' },
+    { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
+    { code: 'JPY', symbol: '¥', name: 'Japanese Yen' }
+  ];
 
   useEffect(() => {
     fetchCategories();
     fetchProducts();
     checkUserSubscription();
+    fetchWishlist();
+    fetchCurrencyRates();
   }, [filters]);
+
+  useEffect(() => {
+    fetchCurrencyRates();
+    localStorage.setItem('preferred_currency', selectedCurrency);
+  }, [selectedCurrency]);
+
+  const fetchWishlist = async () => {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    if (token && user) {
+      try {
+        const userData = JSON.parse(user);
+        const response = await axios.get(`/api/wishlist?user_id=${userData.id}`);
+        setWishlist(response.data.map(item => item.id));
+      } catch (error) {
+        console.error('Error fetching wishlist:', error);
+      }
+    }
+  };
+
+  const handleToggleWishlist = async (e, productId) => {
+    e.stopPropagation();
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    
+    if (!token || !user) {
+      navigate('/login');
+      return;
+    }
+
+    setWishlistLoading(prev => ({ ...prev, [productId]: true }));
+    try {
+      const userData = JSON.parse(user);
+      const isInWishlist = wishlist.includes(productId);
+      
+      if (isInWishlist) {
+        await axios.delete(`/api/wishlist?user_id=${userData.id}&product_id=${productId}`);
+        setWishlist(prev => prev.filter(id => id !== productId));
+      } else {
+        await axios.post('/api/wishlist', {
+          user_id: userData.id,
+          product_id: productId
+        });
+        setWishlist(prev => [...prev, productId]);
+      }
+    } catch (error) {
+      console.error('Error toggling wishlist:', error);
+      alert('Failed to update wishlist. Please try again.');
+    } finally {
+      setWishlistLoading(prev => ({ ...prev, [productId]: false }));
+    }
+  };
 
   const checkUserSubscription = async () => {
     const token = localStorage.getItem('token');
@@ -65,6 +143,49 @@ function Products() {
         console.error('Error checking subscription:', error);
       }
     }
+  };
+
+  const fetchCurrencyRates = async () => {
+    if (selectedCurrency === 'INR') {
+      setCurrencyRates({ INR: 1 });
+      return;
+    }
+    
+    setCurrencyLoading(true);
+    try {
+      const response = await axios.get('/api/currency/rates');
+      setCurrencyRates(response.data.rates || {});
+    } catch (error) {
+      console.error('Error fetching currency rates:', error);
+      setCurrencyRates({ INR: 1 });
+    } finally {
+      setCurrencyLoading(false);
+    }
+  };
+
+  const convertPrice = (priceInINR) => {
+    if (!priceInINR || priceInINR === 0) return null;
+    if (selectedCurrency === 'INR') return priceInINR;
+    
+    const targetRate = currencyRates[selectedCurrency];
+    if (!targetRate) return priceInINR;
+    
+    // Convert from INR to target currency
+    // Rates are relative to INR (base currency)
+    const convertedPrice = priceInINR * targetRate;
+    return convertedPrice;
+  };
+
+  const getCurrencySymbol = () => {
+    const currency = currencies.find(c => c.code === selectedCurrency);
+    return currency ? currency.symbol : '₹';
+  };
+
+  const formatPrice = (price) => {
+    if (!price) return null;
+    const converted = convertPrice(price);
+    if (converted === null) return null;
+    return `${getCurrencySymbol()}${converted.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   const fetchCategories = async () => {
@@ -86,6 +207,8 @@ function Products() {
       if (filters.maxPrice) params.append('max_price', filters.maxPrice);
       if (filters.minRating) params.append('min_rating', filters.minRating);
       if (filters.location) params.append('location', filters.location);
+      if (filters.verifiedSupplier) params.append('verified_supplier', filters.verifiedSupplier);
+      if (filters.bestSeller) params.append('best_seller', filters.bestSeller);
       if (filters.sortBy) params.append('sort_by', filters.sortBy);
       if (filters.sortOrder) params.append('sort_order', filters.sortOrder);
 
@@ -93,6 +216,9 @@ function Products() {
       const endpoint = (filters.minRating || filters.location || filters.sortBy) 
         ? '/api/products/search' 
         : '/api/products';
+      
+      // Request all products (up to 1000) instead of the default 20
+      params.append('per_page', '1000');
       
       const response = await axios.get(`${endpoint}?${params.toString()}`);
       setProducts(response.data.products || response.data);
@@ -117,8 +243,47 @@ function Products() {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
+  const toggleProductSelection = (e, productId) => {
+    e.stopPropagation();
+    const newSelected = new Set(selectedProducts);
+    if (newSelected.has(productId)) {
+      newSelected.delete(productId);
+    } else {
+      newSelected.add(productId);
+    }
+    setSelectedProducts(newSelected);
+  };
+
   const handleProductSelect = (productId) => {
     navigate(`/products/${productId}`, { replace: true });
+  };
+
+  const handleAddToCompare = (e, product) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const currentList = JSON.parse(localStorage.getItem('compareList') || '[]');
+    if (currentList.find(p => p.id === product.id)) {
+      // Already in list, maybe remove it or just do nothing
+      return;
+    }
+    if (currentList.length >= 4) {
+      alert('You can compare up to 4 products at a time.');
+      return;
+    }
+    
+    const updated = [...currentList, {
+      id: product.id,
+      name: product.name,
+      image_url: product.image_url,
+      price: product.price,
+      company_name: product.company_name,
+      location: product.location,
+      is_verified: product.verified,
+      stock_quantity: product.stock_quantity
+    }];
+    
+    localStorage.setItem('compareList', JSON.stringify(updated));
+    window.dispatchEvent(new Event('compareUpdate'));
   };
 
   const handleBuyNow = (e, product) => {
@@ -153,7 +318,7 @@ function Products() {
     }
 
     if (!hasSubscription) {
-      setShowSubscriptionModal(true);
+      navigate('/subscription-plans');
       return;
     }
 
@@ -166,7 +331,7 @@ function Products() {
       setPhoneNumbers(prev => ({ ...prev, [productId]: response.data.phone }));
     } catch (error) {
       if (error.response?.status === 403) {
-        setShowSubscriptionModal(true);
+        navigate('/subscription-plans');
       } else {
         alert('Failed to fetch phone number. Please try again.');
       }
@@ -243,54 +408,40 @@ function Products() {
     }
   };
 
-  const downloadDocument = (type) => {
-    if (!orderData || !cartProduct) return;
+  const downloadDocument = async (type) => {
+    if (!orderData) return;
 
-    const isQuotation = type === 'quotation';
-    const title = isQuotation ? 'Instant Quotation' : 'Order Invoice';
+    try {
+      // Fetch full order details including company address
+      const response = await axios.get(`/api/orders/${orderData.id}`);
+      const fullOrderData = response.data;
 
-    const lines = [
-      `DealsDouble.ai - ${title}`,
-      '====================================',
-      '',
-      `Order ID: ${orderData.id}`,
-      `Order Date: ${orderData.created_at || ''}`,
-      '',
-      `Buyer Name: ${orderData.buyer_name}`,
-      `Buyer Email: ${orderData.buyer_email}`,
-    ];
+      // Prepare data for PDF
+      const pdfData = {
+        ...orderData,
+        ...fullOrderData,
+        product_name: orderData.product_name || (cartProduct ? cartProduct.name : ''),
+        company_name: fullOrderData.company_name || orderData.company_name || (cartProduct ? cartProduct.company_name : ''),
+        shipping: orderData.shipping
+      };
 
-    if (orderData.shipping) {
-      lines.push(
-        '',
-        'Shipping Address:',
-        `${orderData.shipping.name || ''}`,
-        `${orderData.shipping.address || ''}`,
-        `${orderData.shipping.city || ''} ${orderData.shipping.state || ''} ${orderData.shipping.pincode || ''}`
-      );
+      // Generate company address string
+      const companyAddress = fullOrderData.company_location || orderData.company_location || 'Address not provided';
+
+      // Generate PDF
+      generatePDF(pdfData, type, companyAddress);
+    } catch (error) {
+      console.error('Error fetching order details:', error);
+      // Fallback: generate PDF with available data
+      const pdfData = {
+        ...orderData,
+        product_name: orderData.product_name || (cartProduct ? cartProduct.name : ''),
+        company_name: orderData.company_name || (cartProduct ? cartProduct.company_name : ''),
+        shipping: orderData.shipping
+      };
+      const companyAddress = orderData.company_location || 'Address not provided';
+      generatePDF(pdfData, type, companyAddress);
     }
-
-    lines.push(
-      '',
-      'Product Details:',
-      `Product: ${orderData.product_name || cartProduct.name}`,
-      `Supplier: ${orderData.company_name || cartProduct.company_name || ''}`,
-      `Quantity: ${orderData.quantity}`,
-      `Unit Price: ₹${(orderData.unit_price || cartProduct.price || 0).toLocaleString('en-IN')}`,
-      `Total Amount: ₹${(orderData.total_amount || 0).toLocaleString('en-IN')}`,
-      '',
-      `Status: ${orderData.status}`,
-    );
-
-    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${isQuotation ? 'quotation' : 'invoice'}-${orderData.id || 'order'}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
   };
 
   const handleSendInquiry = async (e, productId) => {
@@ -334,28 +485,140 @@ function Products() {
   };
 
   return (
-    <div className="min-h-screen bg-white py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 flex items-center justify-between animate-fade-in">
-          <div>
-            <h1 className="text-4xl font-bold mb-2 text-dark-text animate-slide-down">Products</h1>
-            <p className="text-dark-muted font-semibold animate-slide-down" style={{ animationDelay: '0.1s' }}>Find the products you need from verified suppliers</p>
+    <div className="min-h-screen bg-gray-50 pb-8">
+      {/* Products Promotional Hero Banner - Designed by Stitch */}
+      <section className="w-full h-[400px] md:h-[500px] relative overflow-hidden bg-[#060e20] flex items-center text-left mb-10 border-b border-white/5 shadow-2xl">
+        {/* Background Image & Overlay */}
+        <div className="absolute inset-0 z-0 bg-[#060e20]">
+          <img 
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuD-SY5-Z8mY9HeqI2t0dQ2gqoVEvUyDyGWsVzvvofU5dNNljEUcPt0lJNeUSFlkcA95grLZ7PCL7Hy-sACy9yg2a5drFpfwYj_UiF_QJF8kXLHddBqc9vs-pidvbR9SSoXx3uAp2dnY1-qQR_nNfs0g-K40HgyO1VIAE0MjVITLfEnqbThN6bPIeHqoY7hlvawr5Zl40T8xuoP877G4ejTZ8Lwjrrh4yqU0RcFdQLYlmsnha6Ts_xcJHAUHLQeLkDA7_pmU8aZXqFk" 
+            alt="Global Logistics Hub" 
+            className="w-full h-full object-cover opacity-60"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#060e20] via-[#060e20]/80 to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-[#060e20] to-transparent opacity-60"></div>
+        </div>
+
+        {/* Content Layer */}
+        <div className="relative z-10 flex flex-col justify-center h-full px-4 sm:px-6 lg:px-8 w-full max-w-7xl mx-auto">
+          <div className="flex items-center gap-3 mb-4 animate-fade-in">
+            <div className="w-2 h-2 rounded-full bg-[#81ecff] animate-pulse shadow-[0_0_8px_#81ecff]"></div>
+            <span className="text-xs md:text-sm tracking-[0.2em] uppercase text-[#81ecff] font-bold">Active Operational Grid</span>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setViewMode('list')}
-              className={`px-4 py-2 rounded-lg ${viewMode === 'list' ? 'bg-accent-purple text-white' : 'glass-effect border border-gray-200 text-dark-text'}`}
-            >
-              List
-            </button>
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`px-4 py-2 rounded-lg ${viewMode === 'grid' ? 'bg-accent-purple text-white' : 'glass-effect border border-gray-200 text-dark-text'}`}
-            >
-              Grid
-            </button>
+
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tighter text-white mb-4 drop-shadow-2xl animate-slide-up">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-[#81ecff] to-[#00d4ec]" style={{ textShadow: '0 0 30px rgba(129, 236, 255, 0.4)' }}>
+              Global Sourcing Hub
+            </span>
+          </h1>
+
+          <p className="text-[#a3aac4] text-lg md:text-xl max-w-2xl leading-relaxed animate-slide-up" style={{ animationDelay: '0.1s' }}>
+            Orchestrate your supply chain with precision. High-density marketplace intelligence for the elite operator.
+          </p>
+
+          {/* Decorative Nexus Node (Stitch Design) */}
+          <div className="absolute right-0 bottom-8 hidden lg:flex flex-col items-end opacity-40">
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] tracking-widest text-[#a3aac4] uppercase">System Optimal</span>
+              <div className="w-24 h-px bg-gradient-to-r from-transparent via-[#81ecff] to-transparent opacity-30"></div>
+              <div className="w-3 h-3 rounded-full border border-[#81ecff]/50 flex items-center justify-center">
+                <div className="w-1 h-1 rounded-full bg-[#81ecff]"></div>
+              </div>
+            </div>
           </div>
         </div>
+      </section>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          
+          <div className="mb-6 flex justify-between items-end flex-wrap gap-4">
+            <div className="flex-1">
+              <h1 className="text-4xl font-bold mb-2 text-dark-text animate-slide-down">Product Catalog</h1>
+              <p className="text-dark-muted font-semibold animate-slide-down" style={{ animationDelay: '0.1s' }}>
+                Discover high-quality products from verified global suppliers
+              </p>
+            </div>
+            
+            {/* Bulk Actions (Dynamic) */}
+            {selectedProducts.size > 0 && (
+              <div className="flex items-center gap-4 bg-[#060e20] text-white p-4 rounded-xl shadow-2xl animate-bounce-subtle border border-[#81ecff]/20">
+                <div className="flex flex-col">
+                  <span className="text-xs text-[#81ecff] font-bold uppercase tracking-widest">Bulk Sourcing</span>
+                  <span className="text-lg font-bold">{selectedProducts.size} Items Selected</span>
+                </div>
+                <button
+                  onClick={() => setShowInquiryModal(true)}
+                  className="bg-gradient-to-r from-[#00d4ec] to-[#81ecff] text-[#060e20] px-6 py-2 rounded-lg font-extrabold hover:scale-105 transition-all text-sm uppercase tracking-tighter"
+                >
+                  Send Multi-Supplier RFQ
+                </button>
+                <button 
+                  onClick={() => setSelectedProducts(new Set())}
+                  className="text-white/60 hover:text-white text-xs border-b border-white/20"
+                >
+                  Reset
+                </button>
+              </div>
+            )}
+
+            {/* View Mode & Currency Selector */}
+            <div className="flex gap-3 items-center animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white shadow-sm">
+                <FiDollarSign className="text-accent-purple" size={18} />
+                <select
+                  value={selectedCurrency}
+                  onChange={(e) => setSelectedCurrency(e.target.value)}
+                  className="bg-transparent border-none text-dark-text font-semibold focus:outline-none cursor-pointer"
+                  disabled={currencyLoading}
+                >
+                  {currencies.map(currency => (
+                    <option key={currency.code} value={currency.code}>
+                      {currency.symbol} {currency.code}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden p-1">
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`px-4 py-2 rounded-md transition-all font-semibold ${viewMode === 'list' ? 'bg-gradient-to-r from-accent-purple to-accent-pink text-white shadow-md' : 'text-dark-muted hover:text-dark-text'}`}
+                >
+                  List View
+                </button>
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`px-4 py-2 rounded-md transition-all font-semibold ${viewMode === 'grid' ? 'bg-gradient-to-r from-accent-purple to-accent-pink text-white shadow-md' : 'text-dark-muted hover:text-dark-text'}`}
+                >
+                  Grid View
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Search Bar with AI Mode Toggle */}
+          <div className="glass-effect rounded-xl p-4 animate-slide-down mb-8 flex flex-col md:flex-row gap-4 items-center" style={{ animationDelay: '0.2s' }}>
+            <div className="relative flex-1 w-full">
+              <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-dark-muted" size={20} />
+              <input
+                type="text"
+                placeholder={aiSearchMode ? "Describe what you need (e.g., eco-friendly packaging for export)..." : "Search products by name, description..."}
+                value={filters.search}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
+                className={`w-full pl-12 pr-4 py-3 rounded-lg bg-white border ${aiSearchMode ? 'border-accent-purple shadow-[0_0_15px_rgba(168,85,247,0.2)]' : 'border-dark-border'} text-dark-text placeholder-dark-muted focus:border-accent-purple focus:outline-none transition-all`}
+              />
+            </div>
+            <button
+              onClick={() => setAiSearchMode(!aiSearchMode)}
+              className={`flex items-center gap-2 px-6 py-3 rounded-lg font-bold transition-all whitespace-nowrap ${
+                aiSearchMode 
+                ? 'bg-gradient-to-r from-accent-purple to-accent-pink text-white shadow-lg scale-105' 
+                : 'bg-white border border-gray-200 text-dark-text hover:border-accent-purple'
+              }`}
+            >
+              <div className={`w-2 h-2 rounded-full ${aiSearchMode ? 'bg-white animate-pulse' : 'bg-gray-300'}`}></div>
+              {aiSearchMode ? 'AI Smart Mode Active' : 'Enable AI Smart Search'}
+            </button>
+          </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Filters Sidebar */}
@@ -413,6 +676,60 @@ function Products() {
                   />
                 </div>
 
+                <div>
+                  <label className="block mb-2 font-semibold text-dark-text text-sm">Location</label>
+                  <div className="relative">
+                    <FiMapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-dark-muted" />
+                    <input
+                      type="text"
+                      placeholder="Enter location..."
+                      value={filters.location}
+                      onChange={(e) => handleFilterChange('location', e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 rounded-lg bg-dark-card border border-gray-200 text-dark-text placeholder-dark-muted focus:border-accent-purple focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block mb-2 font-semibold text-dark-text text-sm">Supplier Type</label>
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={filters.verifiedSupplier === 'true'}
+                        onChange={(e) => handleFilterChange('verifiedSupplier', e.target.checked ? 'true' : '')}
+                        className="w-4 h-4 text-accent-purple rounded focus:ring-accent-purple"
+                      />
+                      <FiShield className="text-green-500" size={16} />
+                      <span className="text-sm text-dark-text">Verified Suppliers</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={filters.bestSeller === 'true'}
+                        onChange={(e) => handleFilterChange('bestSeller', e.target.checked ? 'true' : '')}
+                        className="w-4 h-4 text-accent-purple rounded focus:ring-accent-purple"
+                      />
+                      <FiStar className="text-yellow-500" size={16} />
+                      <span className="text-sm text-dark-text">Best Sellers</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block mb-2 font-semibold text-dark-text text-sm">Sort By</label>
+                  <select
+                    value={filters.sortBy}
+                    onChange={(e) => handleFilterChange('sortBy', e.target.value)}
+                    className="w-full px-4 py-2 rounded-lg bg-dark-card border border-gray-200 text-dark-text focus:border-accent-purple focus:outline-none mb-2"
+                  >
+                    <option value="created_at">Newest First</option>
+                    <option value="price">Price: Low to High</option>
+                    <option value="price_desc">Price: High to Low</option>
+                    <option value="rating">Rating: High to Low</option>
+                  </select>
+                </div>
+
                 <div className="pt-2">
                   <button
                     type="button"
@@ -462,17 +779,43 @@ function Products() {
                         style={{ animationDelay: `${idx * 0.05}s` }}
                       >
                         <div className="flex items-center gap-4">
-                          <div className="w-28 h-28 md:w-32 md:h-32 bg-dark-card rounded-lg overflow-hidden flex-shrink-0">
+                          <div className="w-28 h-28 md:w-32 md:h-32 bg-dark-card rounded-lg overflow-hidden flex-shrink-0 relative group-hover:shadow-lg transition-all">
+                            {/* Multi-select Checkbox overlay */}
+                            <div 
+                              onClick={(e) => toggleProductSelection(e, product.id)}
+                              className={`absolute top-2 left-2 z-10 w-6 h-6 rounded-md flex items-center justify-center border-2 transition-all ${
+                                selectedProducts.has(product.id)
+                                ? 'bg-accent-purple border-accent-purple scale-110 shadow-[0_0_10px_rgba(139,92,246,0.3)]'
+                                : 'bg-black/20 border-white/40 hover:border-white'
+                              }`}
+                            >
+                              {selectedProducts.has(product.id) && <FiCheckCircle className="text-white" size={14} />}
+                            </div>
+
+                            {/* Trust Badges Overlay */}
+                            <div className="absolute bottom-2 right-2 flex flex-col gap-1 items-end z-10">
+                              {product.verified && (
+                                <div className="bg-white/90 backdrop-blur-sm text-accent-purple px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter shadow-sm border border-accent-purple/20 flex items-center gap-1">
+                                  <span className="material-symbols-outlined text-[10px]">verified</span>
+                                  Verified
+                                </div>
+                              )}
+                              {product.membership_tier === 'PLATINUM' && (
+                                <div className="bg-gradient-to-r from-amber-400 to-yellow-600 text-white px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter shadow-sm flex items-center gap-1">
+                                  <span className="material-symbols-outlined text-[10px]">workspace_premium</span>
+                                  Gold
+                                </div>
+                              )}
+                            </div>
+
                             {product.image_url ? (
                               <img 
                                 src={product.image_url} 
                                 alt={product.name} 
-                                className="w-full h-full object-cover"
+                                className={`w-full h-full object-cover transition-transform duration-500 ${selectedProducts.has(product.id) ? 'scale-110 opacity-70' : ''}`}
                                 onError={(e) => {
                                   e.target.onerror = null;
-                                  // Fallback to placeholder with product name
-                                  const encodedName = encodeURIComponent(product.name.substring(0, 30));
-                                  e.target.src = `https://via.placeholder.com/400x300/6366f1/ffffff?text=${encodedName}`;
+                                  e.target.src = '/placeholder.png';
                                 }}
                               />
                             ) : (
@@ -484,12 +827,48 @@ function Products() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-4">
                               <div className="flex-1">
-                                <h3 className="text-lg font-bold text-dark-text mb-1">{product.name}</h3>
+                                <div className="flex items-start justify-between mb-1">
+                                    <h3 className="text-lg font-bold text-dark-text flex-1">
+                                      {product.name}
+                                      {product.is_priority && (
+                                        <span className="ml-2 inline-block w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse" title="Priority AI Match"></span>
+                                      )}
+                                    </h3>
+                                  <div className="flex items-center gap-2">
+                                    {product.membership_tier && product.membership_tier !== 'FREE' && (
+                                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                        product.membership_tier === 'PLATINUM' ? 'bg-slate-900 text-white' : 'bg-yellow-500 text-white'
+                                      }`}>
+                                        {product.membership_tier}
+                                      </span>
+                                    )}
+                                    <button
+                                      onClick={(e) => handleToggleWishlist(e, product.id)}
+                                      disabled={wishlistLoading[product.id]}
+                                      className={`ml-2 p-1.5 rounded-lg transition-colors flex-shrink-0 ${
+                                        wishlist.includes(product.id)
+                                          ? 'text-red-500 bg-red-50 hover:bg-red-100'
+                                          : 'text-gray-400 hover:text-red-500 hover:bg-gray-50'
+                                      }`}
+                                      title={wishlist.includes(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
+                                    >
+                                      <FiHeart size={18} fill={wishlist.includes(product.id) ? 'currentColor' : 'none'} />
+                                    </button>
+                                  </div>
+                                </div>
                                 <p className="text-sm font-medium text-dark-muted line-clamp-2 mb-2">{product.description}</p>
                                 <div className="flex items-center gap-4 text-sm mb-2">
-                                  <span className="text-accent-orange font-bold">
-                                    ₹{product.price?.toLocaleString() || 'Price on Request'}
-                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-accent-orange font-bold">
+                                      {formatPrice(product.price) || 'Price on Request'}
+                                    </span>
+                                    {product.price_trend !== 0 && (
+                                      <div className={`flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded ${product.price_trend > 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
+                                        {product.price_trend > 0 ? <FiTrendingUp size={10} /> : <FiTrendingDown size={10} />}
+                                        {Math.abs(product.price_trend)}%
+                                      </div>
+                                    )}
+                                  </div>
                                   <span className="text-dark-muted">{product.company_name}</span>
                                   <span className="text-dark-muted">{product.location}</span>
                                 </div>
@@ -536,6 +915,13 @@ function Products() {
                                     )}
                                   </button>
                                   <button
+                                    onClick={(e) => handleAddToCompare(e, product)}
+                                    className="px-4 py-1.5 rounded-lg glass-effect border border-gray-200 hover:border-accent-purple transition-colors flex items-center gap-2 text-sm"
+                                  >
+                                    <FiLayers />
+                                    Compare
+                                  </button>
+                                  <button
                                     onClick={(e) => handleBuyNow(e, product)}
                                     className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-accent-orange to-accent-pink text-white font-semibold hover:opacity-90 transition-opacity flex items-center gap-2 text-sm"
                                   >
@@ -572,9 +958,7 @@ function Products() {
                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                               onError={(e) => {
                                 e.target.onerror = null;
-                                // Fallback to placeholder with product name
-                                const encodedName = encodeURIComponent(product.name.substring(0, 30));
-                                e.target.src = `https://via.placeholder.com/400x300/6366f1/ffffff?text=${encodedName}`;
+                                e.target.src = '/placeholder.png';
                               }}
                             />
                           ) : (
@@ -582,24 +966,76 @@ function Products() {
                               <FiPackage className="text-4xl" />
                             </div>
                           )}
+                          
+                          {/* Premium Badges Overlay */}
+                          <div className="absolute top-2 left-2 flex flex-col gap-1.5 z-10">
+                            {product.verified && (
+                              <div className="bg-white/90 backdrop-blur-sm text-accent-purple px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest shadow-lg border border-accent-purple/20 flex items-center gap-1">
+                                <span className="material-symbols-outlined text-xs">verified</span>
+                                Verified
+                              </div>
+                            )}
+                            {product.membership_tier === 'PLATINUM' && (
+                              <div className="bg-gradient-to-r from-amber-400 to-yellow-600 text-white px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest shadow-lg flex items-center gap-1">
+                                <span className="material-symbols-outlined text-xs">workspace_premium</span>
+                                Gold Supplier
+                              </div>
+                            )}
+                          </div>
+
                           {product.featured && (
-                            <div className="absolute top-2 right-2 px-2 py-1 bg-gradient-to-r from-accent-purple to-accent-pink text-white text-xs font-semibold rounded">
+                             <div className="absolute top-2 right-2 px-2 py-1 bg-gradient-to-r from-accent-purple to-accent-pink text-white text-[10px] font-black uppercase tracking-tighter rounded shadow-lg">
                               Featured
                             </div>
                           )}
+
+                          {/* Compare Button Overlay (Grid) */}
+                          <div className="absolute bottom-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button 
+                              onClick={(e) => handleAddToCompare(e, product)}
+                              className="p-2 rounded-lg bg-white/90 backdrop-blur-sm text-accent-purple border border-accent-purple/20 shadow-lg hover:bg-accent-purple hover:text-white transition-all"
+                              title="Add to Compare"
+                            >
+                              <FiLayers size={18} />
+                            </button>
+                          </div>
                         </div>
                         <div className="p-5">
-                          <h3 className="text-lg font-bold mb-2 text-dark-text line-clamp-2 group-hover:text-accent-purple transition-colors">
-                            {product.name}
-                          </h3>
+                          <div className="flex items-start justify-between mb-2">
+                            <h3 className="text-lg font-bold text-dark-text line-clamp-2 group-hover:text-accent-purple transition-colors flex-1">
+                              {product.name}
+                              {product.is_priority && (
+                                <span className="ml-2 inline-block w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse" title="Priority AI Match"></span>
+                              )}
+                            </h3>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleToggleWishlist(e, product.id);
+                              }}
+                              disabled={wishlistLoading[product.id]}
+                              className={`ml-2 p-1.5 rounded-lg transition-colors flex-shrink-0 ${
+                                wishlist.includes(product.id)
+                                  ? 'text-red-500 bg-red-50 hover:bg-red-100'
+                                  : 'text-gray-400 hover:text-red-500 hover:bg-gray-50'
+                              }`}
+                              title={wishlist.includes(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
+                            >
+                              <FiHeart size={18} fill={wishlist.includes(product.id) ? 'currentColor' : 'none'} />
+                            </button>
+                          </div>
                           <p className="text-sm font-medium text-dark-muted mb-3 line-clamp-2">
                             {product.description}
                           </p>
                           <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-xl font-bold text-accent-orange">
-                                ₹{product.price?.toLocaleString() || 'Price on Request'}
-                              </p>
+                            <div className="flex-1">
+                              {product.price ? (
+                                <p className="text-xl font-bold text-accent-orange">
+                                  {formatPrice(product.price) || 'Price on Request'}
+                                </p>
+                              ) : (
+                                <p className="text-xl font-bold text-accent-orange">Price on Request</p>
+                              )}
                               <p className="text-xs text-dark-muted mt-1">{product.company_name}</p>
                             </div>
                           </div>

@@ -1,22 +1,31 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
-import { FiPackage, FiMapPin, FiGlobe, FiCheck, FiArrowLeft } from 'react-icons/fi';
+import { FiPackage, FiMapPin, FiGlobe, FiCheck, FiArrowLeft, FiStar } from 'react-icons/fi';
 
 function SupplierDetail() {
   const { id } = useParams();
   const [supplier, setSupplier] = useState(null);
+  const [supplierStats, setSupplierStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await axios.get(`/api/suppliers/${id}`);
-        setSupplier(res.data);
+        const [supplierRes, statsRes] = await Promise.all([
+          axios.get(`/api/suppliers/${id}`),
+          axios.get(`/api/suppliers/${id}/stats`).catch(() => null)
+        ]);
+        setSupplier(supplierRes.data);
+        if (statsRes) {
+          setSupplierStats(statsRes.data);
+        }
       } catch (err) {
         console.error('Error loading supplier', err);
       } finally {
         setLoading(false);
+        setStatsLoading(false);
       }
     };
     load();
@@ -57,8 +66,14 @@ function SupplierDetail() {
               </span>
             </div>
             <div className="flex-1">
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center gap-3 mb-3 flex-wrap">
                 <h1 className="text-3xl font-bold text-dark-text">{supplier.name}</h1>
+                {supplier.best_seller && (
+                  <span className="px-3 py-1 rounded-full bg-yellow-500/20 border border-yellow-500 text-yellow-600 text-sm font-semibold flex items-center gap-1">
+                    <FiStar />
+                    Best Seller
+                  </span>
+                )}
                 {supplier.verified && (
                   <span className="px-3 py-1 rounded-full bg-green-500/20 border border-green-500 text-green-400 text-sm font-semibold flex items-center gap-1">
                     <FiCheck />
@@ -90,6 +105,27 @@ function SupplierDetail() {
           </div>
         </div>
 
+        {supplierStats && !statsLoading && (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+            <div className="glass-effect rounded-xl p-5">
+              <p className="text-xs uppercase tracking-wide text-dark-muted font-semibold mb-2">Trust Score</p>
+              <p className="text-3xl font-black text-dark-text">{supplierStats.trust?.trust_score || supplierStats.stats?.trust_score || 0}</p>
+            </div>
+            <div className="glass-effect rounded-xl p-5">
+              <p className="text-xs uppercase tracking-wide text-dark-muted font-semibold mb-2">Response Rate</p>
+              <p className="text-3xl font-black text-dark-text">{supplierStats.trust?.response_rate || supplierStats.stats?.response_rate || 0}%</p>
+            </div>
+            <div className="glass-effect rounded-xl p-5">
+              <p className="text-xs uppercase tracking-wide text-dark-muted font-semibold mb-2">Completion Rate</p>
+              <p className="text-3xl font-black text-dark-text">{supplierStats.trust?.completion_rate || supplierStats.stats?.completion_rate || 0}%</p>
+            </div>
+            <div className="glass-effect rounded-xl p-5">
+              <p className="text-xs uppercase tracking-wide text-dark-muted font-semibold mb-2">Avg Response</p>
+              <p className="text-3xl font-black text-dark-text">{supplierStats.stats?.avg_response_time || 'N/A'}</p>
+            </div>
+          </div>
+        )}
+
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-dark-text mb-4 flex items-center gap-2">
             <FiPackage />
@@ -108,17 +144,16 @@ function SupplierDetail() {
                 <div className="relative h-48 bg-dark-card overflow-hidden">
                   {p.image_url ? (
                     <img 
-                      src={p.image_url} 
+                      src={p.image_url.startsWith('http') ? p.image_url : `${process.env.REACT_APP_API_URL || ''}${p.image_url.startsWith('/') ? '' : '/'}${p.image_url}`} 
                       alt={p.name}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                       onError={(e) => {
                         e.target.onerror = null;
-                        const encodedName = encodeURIComponent(p.name.substring(0, 30));
-                        e.target.src = `https://via.placeholder.com/400x300/6366f1/ffffff?text=${encodedName}`;
+                        e.target.src = '/placeholder.png';
                       }}
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-dark-muted">
+                    <div className="w-full h-full flex items-center justify-center text-dark-muted bg-gray-100">
                       <FiPackage className="text-4xl" />
                     </div>
                   )}
@@ -149,4 +184,3 @@ function SupplierDetail() {
 }
 
 export default SupplierDetail;
-

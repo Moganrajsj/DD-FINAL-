@@ -1,0 +1,7 @@
+
+C:\Users\mogan\b2b-marketplace\DealsDoubled.in\DealsDoubled.in\frontend\src\pages\Admin.js
+    4:66  warning  'FiSettings' is defined but never used                                                                             no-unused-vars
+  202:6   warning  React Hook useEffect has a missing dependency: 'fetchAnalytics'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+??? 2 problems (0 errors, 2 warnings)
+
